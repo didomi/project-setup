@@ -22,7 +22,7 @@ The setup consists of three files that should live at the root of all your sourc
 
 Example (for node and postgres):
 
-```
+```yml
 version: '3'
 
 services:
@@ -50,7 +50,7 @@ services:
 
 Example (for node and postgres):
 
-```
+```Dockerfile
 FROM node:8
 
 RUN apt-get update
@@ -65,7 +65,7 @@ ENTRYPOINT /bin/bash
 
 Example:
 
-```
+```make
 # The name of the container that will be launched by Docker for running the app
 # This is usually the same as the name of the app
 CONTAINER_NAME = basic-template
