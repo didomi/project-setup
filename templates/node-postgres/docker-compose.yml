@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  app:
+    build: . # Build and run ./Dockerfile
+    working_dir: /app
+    volumes:
+      - .:/app # Always mount the current directory in /app to ensure that the app source code lives there
+    ports:
+      - 8000:8000 # Port that your app would be running
+    links:
+      - postgres
+
+  postgres:
+    image: postgres:9.6
+    ports:
+      - 5432:5432 # Expose the Postgres port so that we can connect to it from outside
+    environment:
+      POSTGRES_USER: user # Database use
+      POSTGRES_PASSWORD: password # Database password
+      POSTGRES_DB: database # Database name
