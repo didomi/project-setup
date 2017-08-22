@@ -18,9 +18,84 @@ Our setup is based on [Docker](https://www.docker.com/) and [make](https://www.g
 
 The setup consists of three files that should live at the root of all your source repositories:
 
- - `docker-compose.yml` that describes the containers for your app and external dependencies (like databases). Ports and volumes mounted from the host to the container must be described in this file.
- - `Dockerfile` that describes how to build a Docker image with the software dependencies required by your app.
- - `Makefile` that has a set of standard commands to get the Docker containers up and running.
+1) `docker-compose.yml` that describes the containers for your app and external dependencies (like databases). Ports and volumes mounted from the host to the container must be described in this file.
+
+Example (for node and postgres):
+
+```
+version: '3'
+
+services:
+  app:
+    build: . # Build and run ./Dockerfile
+    working_dir: /app
+    volumes:
+      - .:/app # Always mount the current directory in /app to ensure that the app source code lives there
+    ports:
+      - 8000:8000 # Port that your app would be running
+    links:
+      - postgres
+
+  postgres:
+    image: postgres:9.6
+    ports:
+      - 5432:5432 # Expose the Postgres port so that we can connect to it from outside
+    environment:
+      POSTGRES_USER: user # Database use
+      POSTGRES_PASSWORD: password # Database password
+      POSTGRES_DB: database # Database name
+```
+
+2. `Dockerfile` that describes how to build a Docker image with the software dependencies required by your app.
+
+Example (for node and postgres):
+
+```
+FROM node:8
+
+RUN apt-get update
+
+## Install psql client
+RUN apt-get install -y postgresql-client
+
+ENTRYPOINT /bin/bash
+```
+
+3. `Makefile` that has a set of standard commands to get the Docker containers up and running.
+
+Example:
+
+```
+# The name of the container that will be launched by Docker for running the app
+# This is usually the same as the name of the app
+CONTAINER_NAME = basic-template
+
+help:
+	@echo "Please use 'make <target>' where <target> is one of"
+	@echo "  drebuild                           rebuilds the image from scratch without using any cached layers"
+	@echo "  drun                               run the built docker image and starts a bash"
+	@echo "  dbash                              starts bash inside a running container."
+
+dbuild:
+	@echo "Building docker image..."
+	docker-compose build app
+
+drebuild:
+	@echo "Rebuilding docker image..."
+	docker-compose rm --force app
+	make dbuild
+
+drun:
+	make dstop
+	make dbuild
+	docker-compose run --name ${CONTAINER_NAME} --service-ports --rm app
+
+dbash:
+	docker exec -it $(CONTAINER_NAME) /bin/sh
+
+dstop:
+	docker-compose stop
+```
 
 The basic idea is that the `docker-compose.yml` and `Dockerfile` describe the environment and dependencies that are required by your app to run in development and the `Makefile` offers commands to run the Docker container and get a bash. The commands are `make drun` to launch a container and get a bash or `make dbash` to get a new bash in an already running container.
 
